@@ -108,13 +108,3 @@ def createTree(dataset, labels):
         myTree[bestFeatLabel][value] = createTree(splitDataSet(dataset, bestFeat, value), subLabels)
     return myTree
 
-if __name__ == '__main__':
-    myDat, labels = createDataSet()
-    myTree = createTree(myDat, labels)
-    print myTree
-    #print myDat
-    #print chooseBestFeatureToSplit(myDat)
-
-    '''
-    print splitDataSet(myDat, 0, 1)
-    #print calcShannonEnt(myDat)'''

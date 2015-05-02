@@ -108,12 +108,6 @@ def createTree(inTree):
     plotTree(inTree, (0.5, 1.0), '')
     plt.show()
 
-if __name__ == '__main__':
-    createPlot()
-    '''print retrieveTree(1)
-    myTree = retrieveTree(0)
-    print getNumLeafs(myTree)
-    print getTreeDepth(myTree)'''
 
 
 
