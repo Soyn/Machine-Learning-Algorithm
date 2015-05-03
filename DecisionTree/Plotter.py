@@ -80,25 +80,27 @@ def plotTree(myTree, parentPt, nodeTxt):
     numLeafs = getNumLeafs(myTree)
     getTreeDepth(myTree)
     firstStr = myTree.keys()[0]
+    #plotTree.totalW存储树的宽度，plotTree.totalD存储树的深度
     cntrPt = (plotTree.xoff + float(numLeafs) / 2.0 / plotTree.totalW, plotTree.yoff)
     #绘制字节点的值：
     plotMidText(cntrPt, parentPt, nodeTxt)
     plotNode(firstStr, cntrPt, parentPt, decisionNode)
     #减少Y的偏移：
+    #plotTree.xoff和plotTree.yoff记录已绘制的的节点的位置，以及下一个放置下一个节点的位置
     secondDict = myTree[firstStr]
-    plotTree.yoff = plotTree.yoff - 1.0 / plotTree.tatalD
+    plotTree.yoff = plotTree.yoff - 1.0 / plotTree.totalD
     for key in secondDict.keys():
         if type(secondDict[key]).__name__ == 'dict':
             plotTree(secondDict[key], cntrPt, str(key))
         else:
             plotTree.xoff = plotTree.xoff + 1.0 / plotTree.totalW
-            plotTree(secondDict[key], (plotTree.xoff, plotTree.yoff), cntrPt, leafNode)
+            plotNode(secondDict[key], (plotTree.xoff, plotTree.yoff), cntrPt, leafNode)
             plotMidText((plotTree.xoff ,plotTree.yoff), cntrPt, str(key))
     plotTree.yoff = plotTree.yoff + 1.0 / plotTree.totalD
 
-def createTree(inTree):
+def createPlot(inTree):
     fig = plt.figure(1, facecolor='pink')
-    cig.clf()
+    fig.clf()
     axprops = dict(xticks = [], yticks = [])
     createPlot.ax1 = plt.subplot(111, frameon = False, **axprops)
     plotTree.totalW = float(getNumLeafs(inTree))
@@ -109,7 +111,11 @@ def createTree(inTree):
     plt.show()
 
 
-
+if __name__ == '__main__':
+    myTree = retrieveTree(0)
+    myTree['no surfacing'][3] = 'maybe'
+    print myTree
+    createPlot(myTree)
 
 
 
