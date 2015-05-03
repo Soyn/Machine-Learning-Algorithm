@@ -108,3 +108,26 @@ def createTree(dataset, labels):
         myTree[bestFeatLabel][value] = createTree(splitDataSet(dataset, bestFeat, value), subLabels)
     return myTree
 
+def classify(inputTree, featLabels, testVec):
+    firstStr = inputTree.keys()[0]
+    print 'firstStr: ', firstStr
+    secondDict = inputTree[firstStr]
+    print 'secondDict: ', secondDict
+    featIndex = featLabels.index(firstStr)
+    print featIndex
+    for key in secondDict.keys():
+        if testVec[featIndex] == key:
+            if type(secondDict[key]).__name__ == 'dict':
+                classLabel = classify(secondDict[key], featLabels, testVec)
+            else:
+                classLabel = secondDict[key]
+    return classLabel
+
+if __name__ == '__main__':
+    myDat, labels = createDataSet()
+    print labels
+    from Plotter import *
+    myTree = retrieveTree(0)
+    print myTree
+    print classify(myTree, labels, [1,0])
+    print classify(myTree, labels, [1,1])
