@@ -110,11 +110,8 @@ def createTree(dataset, labels):
 
 def classify(inputTree, featLabels, testVec):
     firstStr = inputTree.keys()[0]
-    print 'firstStr: ', firstStr
     secondDict = inputTree[firstStr]
-    print 'secondDict: ', secondDict
     featIndex = featLabels.index(firstStr)
-    print featIndex
     for key in secondDict.keys():
         if testVec[featIndex] == key:
             if type(secondDict[key]).__name__ == 'dict':
@@ -123,11 +120,20 @@ def classify(inputTree, featLabels, testVec):
                 classLabel = secondDict[key]
     return classLabel
 
-if __name__ == '__main__':
-    myDat, labels = createDataSet()
-    print labels
-    from Plotter import *
-    myTree = retrieveTree(0)
-    print myTree
-    print classify(myTree, labels, [1,0])
-    print classify(myTree, labels, [1,1])
+def storeTree(inputTree, filename):
+    '''
+    序列化对象存储决策树，
+    '''
+    import pickle
+    fw = open(filename, 'w')
+    pickle.dump(inputTree, fw)
+    fw.close()
+
+def grabTree(filename):
+    '''
+    反序列化存储的树
+    '''
+    import pickle
+    fr = open(filename)
+    return pickle.load(fr)
+
