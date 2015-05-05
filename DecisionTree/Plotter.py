@@ -111,11 +111,7 @@ def createPlot(inTree):
     plt.show()
 
 
-if __name__ == '__main__':
-    myTree = retrieveTree(0)
-    myTree['no surfacing'][3] = 'maybe'
-    print myTree
-    createPlot(myTree)
+
 
 
 
