@@ -1,6 +1,9 @@
 #-*- coding: utf-8 -*-
 __author__ = 'dell'
-'将文件转换成词汇表中的词向量'
+'朴素贝叶斯分类器'
+
+
+import numpy as np
 
 def loadDataSet():
     postingList = [
@@ -31,8 +34,50 @@ def setOfWords2Vec(vocabList, inputSet):
             print "the word: %s is not in my VocabList!" % word
     return returnVec
 
+def trainNB0(trainMatrix, trainCategory):
+    '''
+    朴素贝叶斯分类器训练函数
+    :param trainMatrix:
+    文档的内容为矩阵
+    :param trainCategory:
+    每篇文档构成的的向量trainCategory
+    :return:
+    '''
+    numTrainDocs = len(trainMatrix)
+    numWords = len(trainMatrix[0])
+    print trainCategory
+    pAbusive = sum(trainCategory) / float(numTrainDocs)
+    #生成元素值为0的矩阵
+    p0Num = np.zeros(numWords)
+    p1Num = np.zeros(numWords)
+
+    p0Denom = 0.0
+    p1Denom = 0.0
+
+    #遍历所有文件，对出现在在文件中的词条计数，最后总的词条也要加1:
+    for i in range(numTrainDocs):
+        if trainCategory[i] == 1:
+            p1Num += trainMatrix[i]
+            p1Denom += sum(trainMatrix[i])
+        else:
+            p0Num += trainMatrix[i]
+            p0Denom += sum(trainMatrix[i])
+
+    #计算概率：
+    p1Vect = p1Num / p1Denom
+    p0Vect = p0Num / p0Denom
+    return p0Vect, p1Vect, pAbusive
+
+
 if __name__ == '__main__':
     listOPosts, listClasses = loadDataSet()
     myVocabList = createVocabList(listOPosts)
-    print myVocabList
-    print setOfWords2Vec(myVocabList, listOPosts[0])
+    trainMat = []
+    for postinDoc in listOPosts:
+        trainMat.append(setOfWords2Vec(myVocabList, postinDoc))
+
+    print trainMat
+    p0v, p1v, pAb = trainNB0(trainMat, listClasses)
+    print 'pAb: ', pAb
+    print 'p0v: '
+    print p0v
