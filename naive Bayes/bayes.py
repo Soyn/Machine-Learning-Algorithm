@@ -4,6 +4,7 @@ __author__ = 'dell'
 
 
 import numpy as np
+import math
 
 def loadDataSet():
     postingList = [
@@ -45,14 +46,13 @@ def trainNB0(trainMatrix, trainCategory):
     '''
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
-    print trainCategory
     pAbusive = sum(trainCategory) / float(numTrainDocs)
     #生成元素值为0的矩阵
-    p0Num = np.zeros(numWords)
-    p1Num = np.zeros(numWords)
+    p0Num = np.ones(numWords)
+    p1Num = np.ones(numWords)
 
-    p0Denom = 0.0
-    p1Denom = 0.0
+    p0Denom = 2.0
+    p1Denom = 2.0
 
     #遍历所有文件，对出现在在文件中的词条计数，最后总的词条也要加1:
     for i in range(numTrainDocs):
@@ -64,20 +64,41 @@ def trainNB0(trainMatrix, trainCategory):
             p0Denom += sum(trainMatrix[i])
 
     #计算概率：
-    p1Vect = p1Num / p1Denom
-    p0Vect = p0Num / p0Denom
+    p1Vect = np.log(p1Num / p1Denom)
+    p0Vect = np.log(p0Num / p0Denom)
     return p0Vect, p1Vect, pAbusive
 
 
-if __name__ == '__main__':
+def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
+    '''
+
+    :param vec2Classify:
+    需要分类的向量
+    :param p0Vec:,p1Vecp,Class1:
+    为trainNB0计算的概率
+    :return:
+    '''
+    #vec2Classify中的元素与p1Vec中的对应相乘后加上词汇表中的值相加
+    p1 = sum(vec2Classify * p1Vec, ) +np.log(pClass1)
+    p0 = sum(vec2Classify * p0Vec) + np.log(1.0 - pClass1)
+    if p1 > p0:
+        return 1
+    else:
+        return 0
+
+def testingNB():
     listOPosts, listClasses = loadDataSet()
     myVocabList = createVocabList(listOPosts)
     trainMat = []
     for postinDoc in listOPosts:
         trainMat.append(setOfWords2Vec(myVocabList, postinDoc))
+    p0V, p1V, pAb = trainNB0(np.array(trainMat),np. array(listClasses))
+    testEntry = ['love', 'my', 'dalmation', 'stupid', 'dog', 'garbage']
+    thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
+    print testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb)
+    testEntry = ['stupid', 'garbage', 'love', 'my']
+    thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
+    print testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb)
 
-    print trainMat
-    p0v, p1v, pAb = trainNB0(trainMat, listClasses)
-    print 'pAb: ', pAb
-    print 'p0v: '
-    print p0v
+if __name__ == '__main__':
+     testingNB()
