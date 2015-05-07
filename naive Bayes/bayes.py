@@ -5,6 +5,7 @@ __author__ = 'dell'
 
 import numpy as np
 import math
+import random as rd
 
 def loadDataSet():
     postingList = [
@@ -87,6 +88,10 @@ def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
         return 0
 
 def testingNB():
+    '''
+    测试分类器
+    :return:
+    '''
     listOPosts, listClasses = loadDataSet()
     myVocabList = createVocabList(listOPosts)
     trainMat = []
@@ -100,5 +105,71 @@ def testingNB():
     thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
     print testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb)
 
-if __name__ == '__main__':
-     testingNB()
+def bagOfWords2VecMN(vocabList, inputSet):
+    '''
+    将多个出现的
+    :param vocabList:
+    :param inputSet:
+    :return:
+    '''
+    returnVec = [0] * len(vocabList)
+    for word in inputSet:
+        if word in vocabList:
+            #将出现的词加1
+            returnVec[vocabList.index(word)] += 1
+    return returnVec
+
+def textParse(bigString):
+    '''
+    利用正则表达式匹配字符串，生成词条，用list存储
+    :param bigString:
+    :return:
+    '''
+    import re
+    listOfTokens = re.split(r'\W*', bigString)
+    return [tok.lower() for tok in listOfTokens if len(tok) > 2 ]
+
+def  spamTest():
+    '''
+    对贝叶斯邮件分类器进行自动化处理
+    :return:
+    '''
+    docList = []
+    classList = []
+    fullText = []
+    for i in range(1, 26):
+        #导入文件并将其解析为词列表
+        wordList = textParse(open('email/spam/%d.txt' % i).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+
+        wordList = textParse(open('email/ham/%d.txt' % i).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+
+    vocabList = createVocabList(docList)
+    trainingSet = range(50)
+    testSet = []
+    for i in range(10):
+        #随机生成training Set
+        randIndex = int(rd.uniform(0, len(trainingSet)))
+        testSet.append(trainingSet[randIndex])
+        del(trainingSet[randIndex])
+
+    trainMat = []
+    trainClasses = []
+    for docIndex in trainingSet:
+        trainMat.append(setOfWords2Vec(vocabList, docList[docIndex]))
+        trainClasses.append(classList[docIndex])
+    p0V, p1V, pSpam = trainNB0(np.array(trainMat), np.array(trainClasses))
+
+    errorCount = 0
+    for docIndex in testSet:
+        #计算错误率
+        wordVector = setOfWords2Vec(vocabList, docList[docIndex])
+        if classifyNB(np.array(wordVector), p0V, p1V, pSpam) != classList[docIndex]:
+            errorCount += 1
+    print 'the error rate is: ', float(errorCount) / len(testSet)
+
