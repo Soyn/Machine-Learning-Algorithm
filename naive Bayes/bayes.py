@@ -129,9 +129,12 @@ def textParse(bigString):
     listOfTokens = re.split(r'\W*', bigString)
     return [tok.lower() for tok in listOfTokens if len(tok) > 2 ]
 
+
+
 def  spamTest():
     '''
     对贝叶斯邮件分类器进行自动化处理
+    实现邮件过滤功能
     :return:
     '''
     docList = []
@@ -153,23 +156,88 @@ def  spamTest():
     trainingSet = range(50)
     testSet = []
     for i in range(10):
-        #随机生成training Set
+        #随机生成randIndex
         randIndex = int(rd.uniform(0, len(trainingSet)))
         testSet.append(trainingSet[randIndex])
+        print testSet
         del(trainingSet[randIndex])
+
 
     trainMat = []
     trainClasses = []
     for docIndex in trainingSet:
         trainMat.append(setOfWords2Vec(vocabList, docList[docIndex]))
         trainClasses.append(classList[docIndex])
+    #计算trainingSet的概率
     p0V, p1V, pSpam = trainNB0(np.array(trainMat), np.array(trainClasses))
 
     errorCount = 0
     for docIndex in testSet:
         #计算错误率
-        wordVector = setOfWords2Vec(vocabList, docList[docIndex])
+        wordVector = setOfWords2Vec(vocabList, docList[docIndex])#构建词向量
         if classifyNB(np.array(wordVector), p0V, p1V, pSpam) != classList[docIndex]:
             errorCount += 1
+            print "classification error", docList[docIndex]
     print 'the error rate is: ', float(errorCount) / len(testSet)
+
+#利用朴素贝叶斯分类器从个人广告中筛选出地域倾向
+def calcMostFreq(vocabList, fullText):
+    '''
+    计算出现的频率
+    :param vocabList:
+    :param fullText:
+    :return:
+    返回30个出现频率最高的单词的
+    '''
+    import operator
+    freqDict = {}
+    for token in vocabList:
+        #遍历vocablist，统计在text中出现的词汇
+        freqDict[token] = fullText.count(token)
+    sortedFreq = sorted(freqDict.iteritems(), key = operator.itemgetter(1), reverse = True)
+    return sortedFreq[:30]
+
+def localWords(feed1, feed0):
+    import feedparser
+    doclist = []
+    classList = []
+    fullText = []
+    minLen = min(len(feed1['entries']), len(feed0['entries']))
+
+    for i in range(minLen):
+        wordList = textParse(feed1['entries'][i]['summary'])
+        doclist.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+        wordList = textParse(feed0['entries'][i]['summary'])
+        doclist.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+    vocabList = createVocabList(doclist)
+    top30Words = calcMostFreq(vocabList, fullText)
+
+    for pairW in top30Words:
+        if pairW[0] in vocabList:
+            #删除单词表中出现频率最高的词剔除
+            vocabList.remove(pairW[0])
+    trainingSet = range(2 * minLen)
+    testSet = []
+    for i in range(20):
+        randIndex = int(rd.uniform(0, len(trainingSet)))
+        testSet.append(trainingSet[randIndex])
+        del(trainingSet[randIndex])
+    trainMat = []
+    trainClasses = []
+    for docIndex in trainingSet:
+        trainMat.append(bagOfWords2VecMN(vocabList, doclist[docIndex]))
+        trainClasses.append(classList[docIndex])
+    p0V, p1V, pSpam = trainNB0(np.array(trainMat), np.array(trainClasses))
+    errorCount = 0
+    for docIndex in testSet:
+        wordVector = bagOfWords2VecMN(vocabList, doclist[docIndex])
+        if classifyNB(np.array(wordVector), p0V, p1V, pSpam) != classList[docIndex]:
+            errorCount += 1
+    print 'the error rate is: ', float (errorCount) / len(testSet)
+    return vocabList, p0V, p1V
+
 
