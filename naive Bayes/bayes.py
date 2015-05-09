@@ -7,6 +7,7 @@ import numpy as np
 import math
 import random as rd
 
+import feedparser
 def loadDataSet():
     postingList = [
         ['my', 'dog', 'has', 'flea', 'problems', 'help', 'please'],
@@ -205,6 +206,7 @@ def localWords(feed1, feed0):
     minLen = min(len(feed1['entries']), len(feed0['entries']))
 
     for i in range(minLen):
+        #每次访问一条rss源
         wordList = textParse(feed1['entries'][i]['summary'])
         doclist.append(wordList)
         fullText.extend(wordList)
@@ -239,5 +241,33 @@ def localWords(feed1, feed0):
             errorCount += 1
     print 'the error rate is: ', float (errorCount) / len(testSet)
     return vocabList, p0V, p1V
+
+
+def getTopWords(ny, sf):
+    '''
+    显示地域相关的用词
+    按照顺序输出pSF和 pNY的内容
+    :param ny,sf:
+     本地解析的feed源
+    :return:
+    '''
+    import operator
+    vocabList, p0V, p1V = localWords(ny, sf)#训练并测试分类器
+    topNy = []
+    topSF = []
+    for i in range(len(p0V)):
+        if p0V[i] > -6.0 :
+            topSF.append((vocabList[i], p0V[i]))
+        if p1V[i] > - 6.0:
+            topNy.append((vocabList[i], p1V[i]))
+    sortedSF = sorted(topSF, key = lambda pair: pair[1], reverse = True)
+    print "SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**SF**"
+    for item in sortedSF:
+        print item[0]
+    sortedNY = sorted(topNy, key = lambda pair: pair[1], reverse = True)
+    print "NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY **"
+    for item in sortedNY:
+        print item[0]
+
 
 
