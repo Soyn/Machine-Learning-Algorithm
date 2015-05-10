@@ -270,4 +270,3 @@ def getTopWords(ny, sf):
         print item[0]
 
 
-
