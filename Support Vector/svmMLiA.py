@@ -102,17 +102,11 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                     print "j not moving enough";continue
 
                 alphas[i]  += labelMat[j] * labelMat[i] * (alphaJold - alphas[j])
-                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) *\
-                              dataMatrix[i, :] * dataMatrix[i, :].T -\
-                     labelMat[j] * (alphas[j] - alphaJold)*\
-                    dataMatrix[i, :] * dataMatrix[j, :].T
-                b2 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * \
-                    dataMatrix[i, :] * dataMatrix[i, :].T - \
-                    labelMat[j] * (alphas[j] - alphaJold) *\
-                    dataMatrix[j, :] * dataMatrix[j, :].T
-                if 0 < alphas[i] and (C > alphas[j]):
+                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[i, :].T -labelMat[j] * (alphas[j] - alphaJold)*dataMatrix[i, :] * dataMatrix[j, :].T
+                b2 = b - Ej - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[j, :].T - labelMat[j] * (alphas[j] - alphaJold) *dataMatrix[j, :] * dataMatrix[j, :].T
+                if (0 < alphas[i]) and (C > alphas[j]):
                     b = b1
-                elif 0 < alphas[j] and (C > alphas[j]):
+                elif (0 < alphas[j]) and (C > alphas[j]):
                     b = b2
                 else:
                     b = (b1 + b2) / 2.0
@@ -126,9 +120,126 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
         print "iteration number: %d" %iter
     return b,alphas
 
+class optStruct(object):
+    '''
+    改进simple SMO的运行速度,将数据存储在该对象中
+    '''
 
+    def __init__(self, dataMatIn, classLabels, C, toler):
+        self.X = dataMatIn
+        self.labelMat = classLabels
+        self.C = C
+        self.tol = toler
+        self.m = np.shape(dataMatIn)[0]
+        self.alphas = np.mat(np.zeros((self.m, 1)))
+        self.b = 0
+        #创建一个m x 2 的矩阵，第一列是标志位，标识eCache是否有效
+        #第二列是误差
+        self.eCache = mat(zeros((self.m, 2)))
+
+def calcEk(oS, K):
+        '''
+        每给一个alpha计算一个E值
+        :param oS:
+        :param K:
+        :return:
+        '''
+        fXk = float(np.multiply(oS.alphas, oS.labelMat).T * (oS.X * oS.X[k,:].T)) + oS.b
+        Ek = fXk - float(oS.labelMat[k])
+        return Ek
+def selectJ(i, oS, Ei):
+
+
+    '''
+    获取第二个alpha值或者说是内循环的alpha值
+    :param i:
+    :param oS:
+    :param Ei:
+    第一个alpha的错误
+    :return:
+    '''
+    maxK = -1
+    maxDeltae = 0
+    Ej = 0
+    oS.eCache[i] = [1, Ei]
+    #nonzeros（）返回非0E值对应的alphas值
+    validEcacheList = np.nonzero(oS.eCache[:,0].A)[0]
+
+    if len(validEcacheList) > 1:
+        for k in validEcacheList:
+            if k == i:
+                continue
+            Ek = calcEk(oS, k)
+            deltaE = np.abs(Ei - Ek)
+            if deltaE > maxDeltae:#选择j的最大步长
+                maxK = K
+                maxDeltae = deltaE
+                Ej = Ek
+        return maxK, Ej
+    else:
+        j = selectJrand(i, oS.m)
+        Ej = calcEk(oS, j)
+    return j, Ek
+
+def updateEk(oS, k):
+
+    '''
+    计算误差将其放入到cache中
+    :param oS:
+    :param k:
+    :return:
+    '''
+    Ek = calcEk(oS, k)
+    oS.eCache(oS, k)
+    oS.eCache[k] = [1, Ek]
+
+
+def innerL(i, oS):
+    '''
+    Platt SMO的优化算法
+    :param i:
+    :param oS:
+    :return:
+    '''
+    Ei = calcEk(oS, i)
+    if((oS.labelMat[i] * Ei < -oS.tol) and (oS.alphas[i] < os.C) )or ((oS.labelMat[i] * Ei > oS.tol) and (oS.alphas[i] > 0)):
+        j, Ei = selectJ(i, oS, Ei)
+        alphaIold = oS.alphas[i].copy()
+        alphaJold = oS.alphas[j].copy()
+        if oS.labelMat[i] != oS.labelMat[j]:
+            L = max(0, oS.alphas[j] + oS.alphas[i])
+            H = min(oS.C, oS.C + oS.alphas[j] - oS.alphas[i])
+        else:
+            L = max(0, oS.alphas[j] + os.alphas[i] - oS.C)
+            H = min(os.C, oS.alphas[j] + oS.alphas[i])
+        if L == H:
+            print "L == H"
+            return 0
+        eta = 2.0 * oS.X[i,:] * oS.X[j,:].T - oS.X[i,:] * oS.X[i, :].T - oS.X[j, :] * oS.X[j,:].T
+        if eta >= 0:
+            print "eta >= 0"
+            return 0
+        oS.alphas[j] -= oS.labelMat[j] * (Ei - Ej) / eta
+        oS.alphas[j] = clipAlpha(oS.alphas[j], H, L)
+        updateEk(oS, j)
+        if np.abs(oS.alphas[j] - alphaJold) < 0.00001:
+            print "j not moving enough"
+            return 0
+        os.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJold - oS.alphas[j])
+        updateEk(oS, i)
+        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i, :] * oS.X[i, :].T - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[i, :] *oS.X[j,:].T
+        b2 = oS.b - Ej - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i,:] * oS.X[j,:].T - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[j, :] * oS.X[j,:].T
+        if 0 < oS.alphas[i] and os.C > oS.alphas[i]:
+            oS.b = b1
+        elif 0 < oS.alphas[j] and oS.C > oS.alphas[j]:
+            oS.b = b2
+        else:
+            oS.b = (b1 + b2) / 2.0
+        return 1
+    else:
+        return 0
 
 if __name__ == "__main__":
     dataArr, labelArr = loadDataSet('testSet.txt')
     b,alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
-    print labelArr
+    print alphas[alphas > 0]
