@@ -135,7 +135,7 @@ class optStruct(object):
         self.b = 0
         #创建一个m x 2 的矩阵，第一列是标志位，标识eCache是否有效
         #第二列是误差
-        self.eCache = mat(zeros((self.m, 2)))
+        self.eCache = np.mat(np.zeros((self.m, 2)))
 
 def calcEk(oS, K):
         '''
@@ -144,8 +144,8 @@ def calcEk(oS, K):
         :param K:
         :return:
         '''
-        fXk = float(np.multiply(oS.alphas, oS.labelMat).T * (oS.X * oS.X[k,:].T)) + oS.b
-        Ek = fXk - float(oS.labelMat[k])
+        fXk = float(np.multiply(oS.alphas, oS.labelMat).T * (oS.X * oS.X[K,:].T)) + oS.b
+        Ek = fXk - float(oS.labelMat[K])
         return Ek
 def selectJ(i, oS, Ei):
 
@@ -172,14 +172,14 @@ def selectJ(i, oS, Ei):
             Ek = calcEk(oS, k)
             deltaE = np.abs(Ei - Ek)
             if deltaE > maxDeltae:#选择j的最大步长
-                maxK = K
+                maxK = k
                 maxDeltae = deltaE
                 Ej = Ek
         return maxK, Ej
     else:
         j = selectJrand(i, oS.m)
         Ej = calcEk(oS, j)
-    return j, Ek
+    return j, Ej
 
 def updateEk(oS, k):
 
@@ -190,7 +190,6 @@ def updateEk(oS, k):
     :return:
     '''
     Ek = calcEk(oS, k)
-    oS.eCache(oS, k)
     oS.eCache[k] = [1, Ek]
 
 
@@ -202,16 +201,16 @@ def innerL(i, oS):
     :return:
     '''
     Ei = calcEk(oS, i)
-    if((oS.labelMat[i] * Ei < -oS.tol) and (oS.alphas[i] < os.C) )or ((oS.labelMat[i] * Ei > oS.tol) and (oS.alphas[i] > 0)):
-        j, Ei = selectJ(i, oS, Ei)
+    if((oS.labelMat[i] * Ei < -oS.tol) and (oS.alphas[i] < oS.C) )or ((oS.labelMat[i] * Ei > oS.tol) and (oS.alphas[i] > 0)):
+        j, Ej = selectJ(i, oS, Ei)
         alphaIold = oS.alphas[i].copy()
         alphaJold = oS.alphas[j].copy()
         if oS.labelMat[i] != oS.labelMat[j]:
             L = max(0, oS.alphas[j] + oS.alphas[i])
             H = min(oS.C, oS.C + oS.alphas[j] - oS.alphas[i])
         else:
-            L = max(0, oS.alphas[j] + os.alphas[i] - oS.C)
-            H = min(os.C, oS.alphas[j] + oS.alphas[i])
+            L = max(0, oS.alphas[j] + oS.alphas[i] - oS.C)
+            H = min(oS.C, oS.alphas[j] + oS.alphas[i])
         if L == H:
             print "L == H"
             return 0
@@ -225,11 +224,11 @@ def innerL(i, oS):
         if np.abs(oS.alphas[j] - alphaJold) < 0.00001:
             print "j not moving enough"
             return 0
-        os.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJold - oS.alphas[j])
+        oS.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJold - oS.alphas[j])
         updateEk(oS, i)
         b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i, :] * oS.X[i, :].T - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[i, :] *oS.X[j,:].T
         b2 = oS.b - Ej - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i,:] * oS.X[j,:].T - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[j, :] * oS.X[j,:].T
-        if 0 < oS.alphas[i] and os.C > oS.alphas[i]:
+        if 0 < oS.alphas[i] and oS.C > oS.alphas[i]:
             oS.b = b1
         elif 0 < oS.alphas[j] and oS.C > oS.alphas[j]:
             oS.b = b2
@@ -239,7 +238,42 @@ def innerL(i, oS):
     else:
         return 0
 
+def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
+    '''
+    优化后的SMO算法
+    :param dataMatIn:
+    :param classLabels:
+    :param C:
+    :param toler:
+    :param maxIter:
+    :param kTup:
+    :return:
+    '''
+    oS = optStruct(np.mat(dataMatIn), np.mat(classLabels).transpose(), C, toler)
+    iter = 0
+    entireSet = True
+    alphaPairsChanged = 0
+
+    while (iter < maxIter) and ((alphaPairsChanged) > 0 or (entireSet)):
+        alphaPairsChanged = 0
+        if entireSet:
+            for i in range(oS.m):
+                alphaPairsChanged += innerL(i, oS) #选择第二个alpha
+            print "fullSet, iter: %d i: %d, pairs changed %d"  % (iter, i, alphaPairsChanged)
+            iter += 1
+        else:
+            nonBoundIs = np.nonzero((oS.alphas.A) > 0 * (oS.alphas.A < C))[0]
+            for i in nonBoundIs:
+                alphaPairsChanged += innerL(i, oS)
+                print "non-bound, iter: %d i: %d, pairs changed %d" % (iter, i, alphaPairsChanged)
+            iter += 1
+        if entireSet:
+            entireSet = False
+        elif alphaPairsChanged == 0:
+            entireSet = True
+        print "Iteration number: %d" % iter
+    return oS.b, oS.alphas
+
 if __name__ == "__main__":
     dataArr, labelArr = loadDataSet('testSet.txt')
-    b,alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
-    print alphas[alphas > 0]
+    b,alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
