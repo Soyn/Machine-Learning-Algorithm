@@ -144,9 +144,10 @@ def calcEk(oS, K):
         :param K:
         :return:
         '''
-        fXk = float(np.multiply(oS.alphas, oS.labelMat).T * (oS.X * oS.X[K,:].T)) + oS.b
-        Ek = fXk - float(oS.labelMat[K])
+        fXk = float(multiply(oS.alphas,oS.labelMat).T*oS.K[:,k] + oS.b)
+        Ek = fXk - float(oS.labelMat[k])
         return Ek
+
 def selectJ(i, oS, Ei):
 
 
@@ -192,51 +193,34 @@ def updateEk(oS, k):
     Ek = calcEk(oS, k)
     oS.eCache[k] = [1, Ek]
 
-
 def innerL(i, oS):
-    '''
-    Platt SMO的优化算法
-    :param i:
-    :param oS:
-    :return:
-    '''
+
     Ei = calcEk(oS, i)
-    if((oS.labelMat[i] * Ei < -oS.tol) and (oS.alphas[i] < oS.C) )or ((oS.labelMat[i] * Ei > oS.tol) and (oS.alphas[i] > 0)):
-        j, Ej = selectJ(i, oS, Ei)
-        alphaIold = oS.alphas[i].copy()
-        alphaJold = oS.alphas[j].copy()
-        if oS.labelMat[i] != oS.labelMat[j]:
-            L = max(0, oS.alphas[j] + oS.alphas[i])
+    if ((oS.labelMat[i]*Ei < -oS.tol) and (oS.alphas[i] < oS.C)) or ((oS.labelMat[i]*Ei > oS.tol) and (oS.alphas[i] > 0)):
+        j,Ej = selectJ(i, oS, Ei) #this has been changed from selectJrand
+        alphaIold = oS.alphas[i].copy(); alphaJold = oS.alphas[j].copy();
+        if (oS.labelMat[i] != oS.labelMat[j]):
+            L = max(0, oS.alphas[j] - oS.alphas[i])
             H = min(oS.C, oS.C + oS.alphas[j] - oS.alphas[i])
         else:
             L = max(0, oS.alphas[j] + oS.alphas[i] - oS.C)
             H = min(oS.C, oS.alphas[j] + oS.alphas[i])
-        if L == H:
-            print "L == H"
-            return 0
-        eta = 2.0 * oS.X[i,:] * oS.X[j,:].T - oS.X[i,:] * oS.X[i, :].T - oS.X[j, :] * oS.X[j,:].T
-        if eta >= 0:
-            print "eta >= 0"
-            return 0
-        oS.alphas[j] -= oS.labelMat[j] * (Ei - Ej) / eta
-        oS.alphas[j] = clipAlpha(oS.alphas[j], H, L)
-        updateEk(oS, j)
-        if np.abs(oS.alphas[j] - alphaJold) < 0.00001:
-            print "j not moving enough"
-            return 0
-        oS.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJold - oS.alphas[j])
-        updateEk(oS, i)
-        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i, :] * oS.X[i, :].T - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[i, :] *oS.X[j,:].T
-        b2 = oS.b - Ej - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i,:] * oS.X[j,:].T - oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[j, :] * oS.X[j,:].T
-        if 0 < oS.alphas[i] and oS.C > oS.alphas[i]:
-            oS.b = b1
-        elif 0 < oS.alphas[j] and oS.C > oS.alphas[j]:
-            oS.b = b2
-        else:
-            oS.b = (b1 + b2) / 2.0
+        if L==H: print "L==H"; return 0
+        eta = 2.0 * oS.K[i,j] - oS.K[i,i] - oS.K[j,j] #changed for kernel
+        if eta >= 0: print "eta>=0"; return 0
+        oS.alphas[j] -= oS.labelMat[j]*(Ei - Ej)/eta
+        oS.alphas[j] = clipAlpha(oS.alphas[j],H,L)
+        updateEk(oS, j) #added this for the Ecache
+        if (abs(oS.alphas[j] - alphaJold) < 0.00001): print "j not moving enough"; return 0
+        oS.alphas[i] += oS.labelMat[j]*oS.labelMat[i]*(alphaJold - oS.alphas[j])#update i by the same amount as j
+        updateEk(oS, i) #added this for the Ecache                    #the update is in the oppostie direction
+        b1 = oS.b - Ei- oS.labelMat[i]*(oS.alphas[i]-alphaIold)*oS.K[i,i] - oS.labelMat[j]*(oS.alphas[j]-alphaJold)*oS.K[i,j]
+        b2 = oS.b - Ej- oS.labelMat[i]*(oS.alphas[i]-alphaIold)*oS.K[i,j]- oS.labelMat[j]*(oS.alphas[j]-alphaJold)*oS.K[j,j]
+        if (0 < oS.alphas[i]) and (oS.C > oS.alphas[i]): oS.b = b1
+        elif (0 < oS.alphas[j]) and (oS.C > oS.alphas[j]): oS.b = b2
+        else: oS.b = (b1 + b2)/2.0
         return 1
-    else:
-        return 0
+    else: return 0
 
 def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
     '''
@@ -274,6 +258,69 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
         print "Iteration number: %d" % iter
     return oS.b, oS.alphas
 
-if __name__ == "__main__":
+def clacWs(alphas, dataArr, classLabels):
+    '''
+    获得超平面
+    :param alphas:
+    :param dataArr:
+    :param classLabels:
+    :return:
+    '''
+    X = np.mat(dataArr)
+    labelMat = np.mat(classLabels).transpose()
+    m,n = np.shape(X)
+    w = np.zeros((n, 1))
+    for i in range(m):
+        w += np.multiply(alphas[i] * labelMat[i], X[i, :].T)
+    return w
+
+def kernelTrans(X, A, kTup):
+    '''
+    应用实核函数转换，这里利用的是高斯版本的径向基核函数
+    :param X:
+    描述实核函数的类型的一个字符串
+    :param A:
+    :param kTup:
+    :return:
+    '''
+    m,n = np.shape(X)
+    K = mat(np.zeros((m, 1)))
+    if kTup[0] == 'lin':
+        K = X * A.T
+    elif kTup[0] == 'rbf':
+        for j in range(m):
+            #计算高斯表达式
+            deltaRow = X[j, :] - A
+            K[j] = deltaRow * deltaRow.T
+
+        K = np.exp(K / (-1 * kTup[1] ** 2))#元素之间相除
+    else:
+        raise NameError('Houston We have a Problem --__--That Kernel is not recongnized')
+    return K
+
+class optStruct(object):
+    '''
+    定义类来存储数据集
+    '''
+    def __init__(self, dataMatIn, classLabels, C, toler, kTup):
+        #kTup包含了与实核函数有关的信息
+        self.X = dataMatIn
+        self.C = C
+        self.tol = toler
+        self.m = np.shape(dataMatIn)[0]
+        self.alphas = np.mat(np.zeros((self.m, 1)))
+        self.b = 0
+        self.eCache = np.mat(zeros((self.m, 2)))
+        self.K = np.mat(np.zeros((self.m, self.m)))
+        for i in range(self.m):
+            self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
+
+
+
+'''if __name__ == "__main__":
     dataArr, labelArr = loadDataSet('testSet.txt')
     b,alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
+    ws = clacWs(alphas, dataArr, labelArr)
+    dataMat = np.mat(dataArr)
+    print  dataMat[0] * np.mat(ws) + b
+    print labelArr[0], labelArr[2],labelArr[1]'''
