@@ -120,22 +120,6 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
         print "iteration number: %d" %iter
     return b,alphas
 
-class optStruct(object):
-    '''
-    改进simple SMO的运行速度,将数据存储在该对象中
-    '''
-
-    def __init__(self, dataMatIn, classLabels, C, toler):
-        self.X = dataMatIn
-        self.labelMat = classLabels
-        self.C = C
-        self.tol = toler
-        self.m = np.shape(dataMatIn)[0]
-        self.alphas = np.mat(np.zeros((self.m, 1)))
-        self.b = 0
-        #创建一个m x 2 的矩阵，第一列是标志位，标识eCache是否有效
-        #第二列是误差
-        self.eCache = np.mat(np.zeros((self.m, 2)))
 
 def calcEk(oS, K):
         '''
@@ -144,8 +128,8 @@ def calcEk(oS, K):
         :param K:
         :return:
         '''
-        fXk = float(multiply(oS.alphas,oS.labelMat).T*oS.K[:,k] + oS.b)
-        Ek = fXk - float(oS.labelMat[k])
+        fXk = float(np.multiply(oS.alphas,oS.labelMat).T*oS.K[:,K] + oS.b)
+        Ek = fXk - float(oS.labelMat[K])
         return Ek
 
 def selectJ(i, oS, Ei):
@@ -233,7 +217,7 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
     :param kTup:
     :return:
     '''
-    oS = optStruct(np.mat(dataMatIn), np.mat(classLabels).transpose(), C, toler)
+    oS = optStruct(np.mat(dataMatIn), np.mat(classLabels).transpose(), C, toler,kTup)
     iter = 0
     entireSet = True
     alphaPairsChanged = 0
@@ -284,7 +268,7 @@ def kernelTrans(X, A, kTup):
     :return:
     '''
     m,n = np.shape(X)
-    K = mat(np.zeros((m, 1)))
+    K = np.mat(np.zeros((m, 1)))
     if kTup[0] == 'lin':
         K = X * A.T
     elif kTup[0] == 'rbf':
@@ -305,22 +289,47 @@ class optStruct(object):
     def __init__(self, dataMatIn, classLabels, C, toler, kTup):
         #kTup包含了与实核函数有关的信息
         self.X = dataMatIn
+        self.labelMat = classLabels
         self.C = C
         self.tol = toler
         self.m = np.shape(dataMatIn)[0]
         self.alphas = np.mat(np.zeros((self.m, 1)))
         self.b = 0
-        self.eCache = np.mat(zeros((self.m, 2)))
+        self.eCache = np.mat(np.zeros((self.m, 2)))
         self.K = np.mat(np.zeros((self.m, self.m)))
         for i in range(self.m):
             self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
 
 
+def testRbf(k1 = 1.3):
+    dataArr, labelArr = loadDataSet('testSetRBF.txt')
+    b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1))
+    datMat = np.mat(dataArr)
+    labelMat = np.mat(labelArr).transpose()
+    svInd = np.nonzero(alphas.A > 0)[0]
+    sVs = datMat[svInd]
+    labelSV = labelMat[svInd]
+    print "'there are %d Support Vectors." % np.shape(sVs)[0]
+    m,n = np.shape(datMat)
+    errorCount = 0
+    for  i in range(m):
+        kernelEval = kernelTrans(sVs, datMat[i, :], ('rbf', k1))
+        predict = kernelEval.T * np.multiply(labelSV, alphas[svInd]) + b
+        if np.sign(predict) != np.sign(labelArr[i]):
+            errorCount += 1
+        print "'the training error rate is: %f" % (float (errorCount) / m)
+        dataArr, labelArr = loadDataSet('testSetRBF.txt')
+        errorCount = 0
+        datMat = np.mat(dataArr)
+        labelMat = np.mat(labelArr).transpose()
+        m, n = np.shape(datMat)
+        for i in range(m):
+            kernelEval = kernelTrans(sVs, datMat[i, :], ('rbf', k1))
+            predict = kernelEval.T * np.multiply(labelSV, alphas[svInd]) + b
+            if np.sign(predict) != np.sign(labelArr[i]):
+                errorCount += 1
+        print "the test error rate is: %f" % (float (errorCount) / m)
 
-'''if __name__ == "__main__":
-    dataArr, labelArr = loadDataSet('testSet.txt')
-    b,alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
-    ws = clacWs(alphas, dataArr, labelArr)
-    dataMat = np.mat(dataArr)
-    print  dataMat[0] * np.mat(ws) + b
-    print labelArr[0], labelArr[2],labelArr[1]'''
+
+if __name__ == "__main__":
+    testRbf()
