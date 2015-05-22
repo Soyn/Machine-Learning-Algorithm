@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="fba3fcfd-ee2a-4b9f-9c8e-e15f5a990c27" name="Default" comment="bayes train functions" />
+    <list default="true" id="fba3fcfd-ee2a-4b9f-9c8e-e15f5a990c27" name="Default" comment="bayes train functions">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Support Vector/svmMLiA.py" afterPath="$PROJECT_DIR$/Support Vector/svmMLiA.py" />
+    </list>
     <ignored path="Algorithm.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -27,8 +29,8 @@
       <file leaf-file-name="svmMLiA.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Support Vector/svmMLiA.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5344538" vertical-offset="3898" max-vertical-offset="10571">
-              <caret line="136" column="0" selection-start-line="136" selection-start-column="0" selection-end-line="136" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.24807057" vertical-offset="11524" max-vertical-offset="12431">
+              <caret line="379" column="28" selection-start-line="379" selection-start-column="27" selection-end-line="379" selection-end-column="28" />
               <folding>
                 <element signature="e#61#80#0" expanded="true" />
               </folding>
@@ -63,10 +65,9 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="258" />
-    <option name="y" value="17" />
+    <option name="x" value="905" />
     <option name="width" value="1019" />
-    <option name="height" value="768" />
+    <option name="height" value="1080" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -112,7 +113,7 @@
     <property name="options.lastSelected" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/Support Vector/__init__.py" />
+    <property name="last_opened_file_path" value="F:/机器学习/machinelearninginaction-master/Ch06/svmMLiA.py" />
     <property name="recentsLimit" value="5" />
     <property name="FullScreen" value="false" />
   </component>
@@ -121,7 +122,7 @@
       <console-settings />
     </option>
   </component>
-  <component name="RunManager" selected="Python.svmMLiA">
+  <component name="RunManager" selected="Python.svmMLiA (1)">
     <configuration default="false" name="setup" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -154,6 +155,25 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="Algorithm" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/LogisticRegression/logRegres.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <RunnerSettings RunnerId="PythonRunner" />
+      <ConfigurationWrapper RunnerId="PythonRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="svmMLiA (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="F:/机器学习/machinelearninginaction-master/Ch06" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Algorithm" />
+      <option name="SCRIPT_NAME" value="F:/机器学习/machinelearninginaction-master/Ch06/svmMLiA.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <RunnerSettings RunnerId="PythonRunner" />
@@ -320,16 +340,18 @@
       <ConfigurationWrapper RunnerId="PythonRunner" />
       <method />
     </configuration>
-    <list size="4">
+    <list size="5">
       <item index="0" class="java.lang.String" itemvalue="Python.bayes" />
       <item index="1" class="java.lang.String" itemvalue="Python.svmMLiA" />
       <item index="2" class="java.lang.String" itemvalue="Python.setup" />
       <item index="3" class="java.lang.String" itemvalue="Python.logRegres" />
+      <item index="4" class="java.lang.String" itemvalue="Python.svmMLiA (1)" />
     </list>
     <recent_temporary>
-      <list size="2">
-        <item index="0" class="java.lang.String" itemvalue="Python.logRegres" />
-        <item index="1" class="java.lang.String" itemvalue="Python.setup" />
+      <list size="3">
+        <item index="0" class="java.lang.String" itemvalue="Python.svmMLiA (1)" />
+        <item index="1" class="java.lang.String" itemvalue="Python.logRegres" />
+        <item index="2" class="java.lang.String" itemvalue="Python.setup" />
       </list>
     </recent_temporary>
   </component>
@@ -386,7 +408,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="258" y="17" width="1019" height="768" extended-state="0" />
+    <frame x="905" y="0" width="1019" height="1080" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3287234" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -444,6 +466,16 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Support Vector/svmMLiA.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="10571">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#61#80#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Support Vector/svmMLiA.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="10292">
@@ -575,10 +607,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/KNN/KNN.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.85446525" vertical-offset="3565" max-vertical-offset="5425">
+          <caret line="144" column="0" selection-start-line="131" selection-start-column="0" selection-end-line="144" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://F:/机器学习/machinelearninginaction-master/Ch06/svmMLiA.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.68357223" vertical-offset="1085" max-vertical-offset="11036">
+          <caret line="56" column="96" selection-start-line="56" selection-start-column="96" selection-end-line="56" selection-end-column="96" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Support Vector/svmMLiA.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5344538" vertical-offset="3898" max-vertical-offset="10571">
-          <caret line="136" column="0" selection-start-line="136" selection-start-column="0" selection-end-line="136" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.24807057" vertical-offset="11524" max-vertical-offset="12431">
+          <caret line="379" column="28" selection-start-line="379" selection-start-column="27" selection-end-line="379" selection-end-column="28" />
           <folding>
             <element signature="e#61#80#0" expanded="true" />
           </folding>
