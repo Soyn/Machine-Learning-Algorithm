@@ -4,6 +4,7 @@ __author__ = 'dell'
 '自适应Boost(adaboost)'
 
 import numpy as np
+import math
 
 def loadSimpleData():
     dataMat = np.matrix(
@@ -69,4 +70,82 @@ def buildStump(dataArr, classLabels, D):
                     bestStump['ineq'] = inequal
     return bestStump, minError, bestClassEst
 
+def adaBoostTrainDs(dataArr, classLabels, numIt = 40):
+    '''
+    利用单层决策树训练adaBoost算法
+    :param dataArr:
+    :param classLabels:
+    :param numIt:
+    :return:
+    '''
+    weakClassArr = []
+    m = np.shape(dataArr)[0]
+    D = np.mat(np.ones((m, 1)) / m)
+    aggClassEst = np.mat(np.zeros((m, 1)))
+    for i in range(numIt):
+        bestStump, error, classEst = buildStump(dataArr, classLabels, D)
+        #print 'D:  ', D.T
+        alpha = float(0.5 * math.log((1.0 - error) / max(error, math.e - 16)))
+        bestStump['alpha'] = alpha
 
+        weakClassArr.append(bestStump)
+        #print "classEst:  ", classEst.T
+        expon = np.multiply(-1 * alpha * np.mat(classLabels).T, classEst)
+        D = np.multiply(D, np.exp(expon))
+        D = D / D.sum()
+
+        aggClassEst += alpha * classEst
+        #print "aggClassEst:  ", aggClassEst.T
+        aggErrors = np.multiply(np.sign(aggClassEst) != np.mat(classLabels).T, np.ones((m, 1)))
+        errorRate = aggErrors.sum() / m
+
+        print "total error:  ", errorRate, '\n'
+        if errorRate == 0.0:
+            break
+    return weakClassArr
+
+def adaClassify(dataToClass, classifierArr):
+    '''
+    基于adaBoost的分类函数
+    :param dataToClass:
+    待分类的实例
+    :param classifierArr:
+
+    :return:
+    '''
+    dataMatrix = np.mat(dataToClass)
+    m = np.shape(dataMatrix)[0]
+    aggClassEst = np.mat(np.zeros((m, 1)))
+    for i in range(len(classifierArr)):
+        classEst = stumpClassify(dataMatrix, classifierArr[i]['dim'], classifierArr[i]['thresh'], classifierArr[i]['ineq'])
+        aggClassEst += classifierArr[i]['alpha'] * classEst
+        print aggClassEst
+    return np.sign(aggClassEst)
+
+def loadDataSet(filename):
+    '''
+    从文件中加载数据
+    :param filename:
+    :return:
+    '''
+    numFeat = len(open(filename).readline().split('\t'))
+    dataMat = []
+    labelMat = []
+    fr = open(filename)
+    for line in fr.readlines():
+        lineArr = []
+        curLine = line.strip().split('\t')
+        for i in range(numFeat - 1):
+            lineArr.append(float(curLine[i]))
+        dataMat.append(lineArr)
+        labelMat.append(float(curLine[-1]))
+    return dataMat, labelMat
+
+
+if __name__ == "__main__":
+    dataArr, labelArr = loadDataSet('horseColicTraining2.txt')
+    classifierArrary = adaBoostTrainDs(dataArr, labelArr, 10)
+    testArr, testLabelArr = loadDataSet('horseColicTest2.txt')
+    prediction10 = adaClassify(testArr, classifierArrary)
+    errArr = np.mat(np.ones((67, 1)))
+    print errArr[prediction10 != np.mat(testLabelArr).T].sum()
