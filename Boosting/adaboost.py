@@ -102,7 +102,7 @@ def adaBoostTrainDs(dataArr, classLabels, numIt = 40):
         print "total error:  ", errorRate, '\n'
         if errorRate == 0.0:
             break
-    return weakClassArr
+    return weakClassArr, aggClassEst
 
 def adaClassify(dataToClass, classifierArr):
     '''
@@ -141,11 +141,46 @@ def loadDataSet(filename):
         labelMat.append(float(curLine[-1]))
     return dataMat, labelMat
 
+def plotROC(predStrengths, classLabels):
+    '''
+    画出ROC的Plot图
+    :param predStrengths:
+     预测强度
+    :param classLabels:
+    :return:
+    '''
+    import matplotlib.pyplot as plt
+    cur = (1.0, 1.0)
+    ySum = 0.0#ySum用于计算ROC下方的面积
+    #获得正例的数目
+    numPosClas  = np.sum(np.array(classLabels) == 1.0)
+    yStep = 1 / float(numPosClas)
+    xStep = 1 / float(len(classLabels) - numPosClas)
+    sortedIndicies = predStrengths.argsort()
+    fig = plt.figure()
+    fig.clf()
+    ax = plt.subplot(111)
+    for index in sortedIndicies.tolist()[0]:
+        if classLabels[index] == 1.0:
+            delX = 0
+            dely = yStep
+        else:
+            delX = xStep
+            dely = 0
+            ySum += cur[1]
+
+        ax.plot([cur[0], cur[0] - delX], [cur[1], cur[1] - dely], c = 'b')
+        cur = (cur[0] - delX, cur[1] - dely)
+    ax.plot([0,1], [0,1], 'b--')
+    plt.xlabel('False Postive Rate.')
+    plt.ylabel('True Postive Rate.')
+    plt.title('ROC curve for AdaBoost Colic Detection System.')
+    ax.axis([0, 1, 0, 1])
+    plt.show()
+    print " the Area Under te Curve is:", ySum * xStep
+
 
 if __name__ == "__main__":
     dataArr, labelArr = loadDataSet('horseColicTraining2.txt')
-    classifierArrary = adaBoostTrainDs(dataArr, labelArr, 10)
-    testArr, testLabelArr = loadDataSet('horseColicTest2.txt')
-    prediction10 = adaClassify(testArr, classifierArrary)
-    errArr = np.mat(np.ones((67, 1)))
-    print errArr[prediction10 != np.mat(testLabelArr).T].sum()
+    classifierArrary, aggClassEst  = adaBoostTrainDs(dataArr, labelArr, 10)
+    plotROC(aggClassEst.T, labelArr)
