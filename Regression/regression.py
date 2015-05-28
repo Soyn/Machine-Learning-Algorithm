@@ -4,6 +4,7 @@ __author__ = 'dell'
 '利用回归分类'
 
 import numpy as np
+from math import *
 
 def loadDataSet(filename):
     '''
@@ -103,10 +104,98 @@ def PlotLocalRegression():
     ax.scatter(xMat[:, 1].flatten().A[0], np.mat(yArr).T.flatten().A[0], s = 2, c = 'red')
     plt.show()
 
+def rssError(yArr, yHatArr):
+    return ((yArr - yHatArr) ** 2).sum()
+
+
+def ridgeRegres(xMat, yMat, lam = 0.2):
+    '''
+    利用岭回归处理特征值大于数据点时
+    :param xMat:
+    :param yMat:
+    :param lam:
+    :return:
+    '''
+    xTx = xMat.T * xMat
+    denom = xTx + np.eye(np.shape(xMat)[1]) * lam
+    if np.linalg.det(denom) == 0.0:
+        print "this matrix is singular, cannot do inverse."
+        return
+    ws = denom.I * (xMat.T * yMat)
+    return ws
+
+def ridgeTest(xArr, yArr):
+    import  math
+    xMat = np.mat(xArr)
+    yMat = np.mat(yArr).T
+    yMean = np.mean(yMat, 0)
+    yMat = yMat - yMean
+    xMeans = np.mean(xMat, 0)
+    xVar = np.var(xMat, 0)
+    xMat = (xMat - xMeans) / xVar
+    numTestPts = 30
+    wMat = np.zeros((numTestPts, np.shape(xMat)[1]))
+    for i in range(numTestPts):
+        ws = ridgeRegres(xMat, yMat, math.exp(i - 10))
+        wMat[i, :] = ws.T
+    return wMat
+
+def PlotRidgeRegres():
+    abX, abY = loadDataSet('abalone.txt')
+    ridgeWeights = ridgeTest(abX, abY)
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(ridgeWeights)
+    plt.show()
+
+def regularize(xMat):
+    inMat = xMat.copy()
+    inMeans  = np.mean(inMat, 0)
+    inVar = np.var(inMat, 0)
+    inMat = (inMat - inMeans) / inVar
+    return inMat
+def stageWise(xArr, yArr, eps = 0.01, numIt = 100):
+    import math
+    '''
+    前向逐步回归算法实现
+    :param xArr:
+    :param yArr:
+    :param eps:
+    每次迭代的步长
+    :param numIt:
+    迭代的总次数
+    :return:
+    '''
+    xMat = np.mat(xArr)
+    yMat = np.mat(yArr).T
+    yMean = np.mean(yMat, 0)
+    yMat = yMat - yMean
+    xMat = regularize(xMat)
+    m,n = np.shape(xMat)
+    returnMat = np.zeros((numIt, n))
+    ws = np.zeros((n, 1))
+    wsTest = ws.copy()
+    wsMax = ws.copy()
+    for i in range(numIt):
+        print ws.T
+        lowestError = np.inf
+        for j in range(n):
+            for sign in [-1,1]:
+                wsTest = ws.copy()
+                wsTest[j] += eps * sign
+                yTest = xMat * wsTest
+                rssE = rssError(yMat.A, yTest.A)
+                if rssE < lowestError:
+                    lowestError = rssE
+                    wsMax = wsTest
+        ws = wsMax.copy()
+        returnMat[i, :] = ws.T
+    return returnMat
 
 if __name__ == "__main__":
-    PlotLocalRegression()
-
+    xArr,yArr = loadDataSet('abalone.txt')
+    print stageWise(xArr, yArr, 0.01, 200)
 
 
 
