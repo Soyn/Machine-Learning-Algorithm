@@ -7,3 +7,4 @@ python 2.7.9
 
 if you have some questions about these, please send an email to me
 my email is: w604408482@gmail.com
+怎么出问题了
