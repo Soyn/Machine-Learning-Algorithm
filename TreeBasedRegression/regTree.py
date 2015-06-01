@@ -156,12 +156,98 @@ def prune(tree, testData):
     else:
         return tree
 
+def linearSolve(dataSet):
+    '''
+    格式化数据
+    :param dataSet:
+    :return:
+    '''
+    m, n = np.shape(dataSet)
+    X = np.mat(np.ones((m, n)))
+    Y = np.mat(np.ones((m, 1)))
+    X[:, 1:n] = dataSet[:, 0:n-1]
+    Y = dataSet[:, -1]
+    xTx = X.T * X
+    if np.linalg.det(xTx) == 0.0:
+        raise NameError('This matrix is singular, canot do inverse,\ntry increasing the second value of ops')
+    ws = xTx.I * (X.T * Y)
+    return ws, X,Y
+
+def modelLeaf(dataSet):
+    '''
+    产生叶子节点的模型
+    :param dataSet:
+    :return:
+    返回回归系数ws
+    '''
+    ws, X,Y = linearSolve(dataSet)
+    return ws
+
+def modelErr(dataSet):
+    '''
+    计算数据集的错误率
+    :param dataSet:
+    :return:
+    '''
+    ws, X,Y = linearSolve(dataSet)
+    yHat = X * ws
+    return np.sum(np.power(Y - yHat, 2))
+
+def regTreeEVal(model, inDat):
+    '''
+    回归树计算叶子的值
+    :param model:
+    :param inDat:
+    :return:
+    '''
+    return float(model)
+
+def modelTreeEval(model, inDat):
+    '''
+    模型树计算树的叶子的值
+    :param model:
+    :param inDat:
+    :return:
+    '''
+    n = np.shape(inDat)[1]
+    X = np.mat(np.ones((1, n + 1)))
+    X[:, 1 : n+1] = inDat
+    return float(X * model)
+
+def treeForeCast(tree, inData, modelEval = regTreeEVal):
+    '''
+    预测树
+    :param tree:
+    :param inData:
+    :param modelEval:
+    :return:
+    '''
+    if not isTree(tree):
+        return modelEval(tree, inData)
+    if inData[tree['spInd']] > tree['spVal']:
+        if isTree(tree['left']):
+            return treeForeCast(tree['left'], inData, modelEval)
+        else:
+            return modelEval(tree['left'], inData)
+    else:
+        if isTree(tree['right']):
+            return treeForeCast(tree['right'], inData, modelEval)
+        else:
+            return modelEval(tree['right'], inData)
+
+def createForeCast(tree, testData, modelEval = regTreeEVal):
+    m = len(testData)
+    yHat = np.mat(np.zeros((m, 1)))
+    for i in range(m):
+        yHat[i, 0] = treeForeCast(tree, np.mat(testData[i]), modelEval)
+    return yHat
+
 if __name__ == "__main__":
-    myDat  = loadDataSet('ex2.txt')
-    myMat = np.mat(myDat)
-    myTree = createTree(myMat, ops = (0, 1))
-    myDatTest = loadDataSet('ex2test.txt')
-    myMat2Test = np.mat(myDatTest)
-    print prune(myTree, myMat2Test)
+    trainMat = np.mat(loadDataSet('bikeSpeedVsIq_train.txt'))
+    testMat = np.mat(loadDataSet('bikeSpeedVsIq_test.txt'))
+    myTree = createTree(trainMat, ops = (1, 20))
+    yHat = createForeCast(myTree, testMat[:, 0])
+    np.corrcoef(yHat, testMat[:, 1], rowvar = 0)[0, 1]
+
 
 
